@@ -15,7 +15,7 @@ export function ConfigSection() {
   const { success, error } = useToastContext();
 
   const handleSave = () => {
-    if (!validateApiKey(apiKey)) {
+    if (!apiKey || !validateApiKey(apiKey)) {
       error('API Key格式无效');
       return;
     }

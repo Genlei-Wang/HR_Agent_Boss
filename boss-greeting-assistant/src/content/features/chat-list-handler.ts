@@ -3,38 +3,32 @@
  * 用于在沟通列表页面自动要简历、接收简历等功能
  */
 
-import { DOM_SELECTORS } from '../dom-selectors';
-import { RiskControl } from '../risk-control';
-import { MessageType } from '../../shared/message-types';
 import type { OperationLog } from '../../shared/types';
-import { generateId } from '../../shared/utils';
 
 /**
  * 沟通列表处理器
  * 处理沟通列表页面的自动化操作
  */
 export class ChatListHandler {
-  private stopped = false;
-  
   /**
    * 设置停止标志
    */
   stop(): void {
-    this.stopped = true;
+    // TODO: 实现停止逻辑
   }
   
   /**
    * 重置停止标志
    */
   reset(): void {
-    this.stopped = false;
+    // TODO: 实现重置逻辑
   }
   
   /**
    * 处理沟通列表
    * 挨个要简历、接收简历
    */
-  async processChatList(config: {
+  async processChatList(_config: {
     autoRequestResume: boolean;
     autoAcceptResume: boolean;
     delayRange: { min: number; max: number };
@@ -53,8 +47,10 @@ export class ChatListHandler {
   
   /**
    * 请求简历
+   * @deprecated 待实现
    */
-  private async requestResume(candidateId: string): Promise<boolean> {
+  // @ts-ignore - 待实现
+  private async requestResume(_candidateId: string): Promise<boolean> {
     try {
       // TODO: 实现要简历逻辑
       // 1. 找到"要简历"按钮
@@ -69,8 +65,10 @@ export class ChatListHandler {
   
   /**
    * 接收简历
+   * @deprecated 待实现
    */
-  private async acceptResume(candidateId: string): Promise<boolean> {
+  // @ts-ignore - 待实现
+  private async acceptResume(_candidateId: string): Promise<boolean> {
     try {
       // TODO: 实现接收简历逻辑
       // 1. 找到"接收"按钮

@@ -5,7 +5,7 @@
 
 import type { AIService, AIModelConfig } from '../../shared/ai-service.interface';
 import type { MatchResult } from '../../shared/types';
-import { SYSTEM_PROMPT, buildUserPrompt, TEST_PROMPT } from '../../shared/prompts';
+import { SYSTEM_PROMPT, buildUserPrompt } from '../../shared/prompts';
 import { extractJson } from '../../shared/utils';
 
 /**

@@ -23,7 +23,7 @@ export class KimiService extends BaseAIService {
   async analyzeCandidate(
     imageBase64: string,
     jobDescription: string,
-    candidateInfo?: { index: number; name: string; sessionDir?: string }
+    _candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
     const prompt = this.buildPrompt(jobDescription);
     
@@ -39,7 +39,7 @@ export class KimiService extends BaseAIService {
   /**
    * 调用Kimi API
    */
-  private async callKimiAPI(prompt: string, imageBase64?: string): Promise<string> {
+  private async callKimiAPI(_prompt: string, _imageBase64?: string): Promise<string> {
     // TODO: 实现Kimi API调用
     throw new Error('Kimi服务暂未实现，敬请期待');
   }

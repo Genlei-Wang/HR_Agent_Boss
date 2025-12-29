@@ -23,7 +23,7 @@ export class QwenService extends BaseAIService {
   async analyzeCandidate(
     imageBase64: string,
     jobDescription: string,
-    candidateInfo?: { index: number; name: string; sessionDir?: string }
+    _candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
     const prompt = this.buildPrompt(jobDescription);
     
@@ -39,7 +39,7 @@ export class QwenService extends BaseAIService {
   /**
    * 调用通义千问API
    */
-  private async callQwenAPI(prompt: string, imageBase64?: string): Promise<string> {
+  private async callQwenAPI(_prompt: string, _imageBase64?: string): Promise<string> {
     // TODO: 实现通义千问API调用
     // 参考：https://help.aliyun.com/zh/model-studio/developer-reference/api-details-9
     throw new Error('通义千问服务暂未实现，敬请期待');
