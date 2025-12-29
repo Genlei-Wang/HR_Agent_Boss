@@ -12,7 +12,10 @@ import { STORAGE_KEYS } from '../shared/constants';
 import { AIServiceFactory } from '../shared/ai-service.interface';
 import type { AIService, AIModelConfig } from '../shared/ai-service.interface';
 import { getModelConfig } from '../shared/ai-config';
-import type { PluginConfig } from '../shared/types';
+import type { PluginConfig, MatchResult } from '../shared/types';
+// 直接导入，避免动态导入导致Vite添加包含window的模块预加载代码
+import { saveScreenshot } from './debug-logger';
+import { saveScreenshotWithThumbnail } from './file-saver';
 
 // AI服务实例缓存
 let aiService: AIService | null = null;
@@ -32,7 +35,7 @@ async function getAIService(config?: PluginConfig): Promise<AIService> {
   const savedConfig = storageResult[STORAGE_KEYS.CONFIG] as Partial<PluginConfig> | undefined;
   const oldApiKey = storageResult[STORAGE_KEYS.API_KEY] as string | undefined;
   
-  // 兼容旧版本：如果只有apiKey，使用默认Gemini配置
+  // 兼容旧版本：如果只有apiKey，使用默认Qwen配置
   let aiModelConfig: AIModelConfig;
   
   if (config?.aiModel) {
@@ -48,14 +51,15 @@ async function getAIService(config?: PluginConfig): Promise<AIService> {
       aiModelConfig.model = savedConfig.aiModel.model;
     }
   } else if (oldApiKey) {
-    // 兼容旧版本：只有apiKey，默认使用Gemini
-    aiModelConfig = getModelConfig('gemini', oldApiKey);
+    // 兼容旧版本：只有apiKey，默认使用Qwen
+    aiModelConfig = getModelConfig('qwen', oldApiKey);
+    aiModelConfig.model = 'qwen3-vl-plus';
   } else {
     throw new Error('未配置AI模型和API Key');
   }
   
   // 创建服务实例
-  aiService = await AIServiceFactory.createService(aiModelConfig);
+  aiService = AIServiceFactory.createService(aiModelConfig);
   
   return aiService;
 }
@@ -78,7 +82,7 @@ async function handleAnalyzeCandidate(payload: any): Promise<Response> {
     
     // 保存截图（记录到debug.log）
     if (payload.candidateInfo) {
-      const { saveScreenshot } = await import('./debug-logger');
+      // 使用静态导入，避免动态导入导致Vite添加包含window的模块预加载代码
       await saveScreenshot(
         payload.candidateInfo.sessionDir || 'default',
         payload.candidateInfo.index,
@@ -88,7 +92,6 @@ async function handleAnalyzeCandidate(payload: any): Promise<Response> {
       
       // 保存截图和缩略图到本地文件
       try {
-        const { saveScreenshotWithThumbnail } = await import('./file-saver');
         await saveScreenshotWithThumbnail(
           imageBase64,
           payload.candidateInfo.name,
@@ -102,12 +105,49 @@ async function handleAnalyzeCandidate(payload: any): Promise<Response> {
     }
     
     // 2. 调用AI服务分析
-    const service = await getAIService(payload.config);
-    const result = await service.analyzeCandidate(
-      imageBase64,
-      payload.jobDescription,
-      payload.candidateInfo
-    );
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:105',message:'准备调用AI服务',data:{hasConfig:!!payload.config,hasWindow:typeof window !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'WINDOW_ERROR'})}).catch(()=>{});
+    } catch (e) {}
+    // #endregion
+    
+    let service: AIService;
+    try {
+      service = await getAIService(payload.config);
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:110',message:'AI服务创建成功',data:{serviceType:service.constructor.name},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'WINDOW_ERROR'})}).catch(()=>{});
+      } catch (e) {}
+      // #endregion
+    } catch (error: any) {
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:115',message:'AI服务创建失败',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'WINDOW_ERROR'})}).catch(()=>{});
+      } catch (e) {}
+      // #endregion
+      throw error;
+    }
+    
+    let result: MatchResult;
+    try {
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:123',message:'准备调用analyzeCandidate',data:{hasImage:!!imageBase64,imageLength:imageBase64.length},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'WINDOW_ERROR'})}).catch(()=>{});
+      } catch (e) {}
+      // #endregion
+      result = await service.analyzeCandidate(
+        imageBase64,
+        payload.jobDescription,
+        payload.candidateInfo
+      );
+    } catch (error: any) {
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:130',message:'analyzeCandidate调用失败',data:{errorMessage:error.message,errorName:error.name,errorStack:error.stack?.substring(0,1000)},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'WINDOW_ERROR'})}).catch(()=>{});
+      } catch (e) {}
+      // #endregion
+      throw error;
+    }
     
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:84',message:'AI分析成功',data:{match:result.match,confidence:result.confidence,reasonLength:result.reason?.length,highlightsCount:result.highlights?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'api-call',hypothesisId:'API_ERROR'})}).catch(()=>{});
@@ -139,18 +179,36 @@ async function handleAnalyzeCandidate(payload: any): Promise<Response> {
  */
 async function handleTestApiKey(payload: { 
   apiKey: string; 
-  modelType?: 'gemini' | 'qwen' | 'kimi' | 'deepseek' | 'wenxin' | 'zhipu';
+  modelType?: 'gemini' | 'qwen';
   model?: string;
 }): Promise<Response> {
   try {
-    // 兼容旧版本：如果没有指定模型类型，默认使用Gemini
-    const modelType = payload.modelType || 'gemini';
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:141',message:'handleTestApiKey开始',data:{modelType:payload.modelType,hasModel:!!payload.model,hasApiKey:!!payload.apiKey},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
+    // 兼容旧版本：如果没有指定模型类型，默认使用Qwen
+    const modelType = payload.modelType || 'qwen';
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:149',message:'准备创建服务',data:{modelType,hasDocument:typeof document !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     const aiModelConfig = getModelConfig(modelType, payload.apiKey);
     if (payload.model) {
       aiModelConfig.model = payload.model;
     }
     
-    const service = await AIServiceFactory.createService(aiModelConfig);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:155',message:'调用createService前',data:{modelType:aiModelConfig.type,model:aiModelConfig.model,hasDocument:typeof document !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    
+    const service = AIServiceFactory.createService(aiModelConfig);
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'background/index.ts:160',message:'createService成功',data:{serviceType:service.constructor.name},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     const testResult = await service.testApiKey();
     
     if (testResult.valid) {

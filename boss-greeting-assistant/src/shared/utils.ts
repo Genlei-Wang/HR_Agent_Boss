@@ -1,5 +1,7 @@
 /**
  * 工具函数
+ * 注意：此文件包含使用DOM API的函数（如downloadTextFile），不应在Service Worker中导入
+ * Service Worker应使用 utils-sw.ts
  */
 
 /**
@@ -78,8 +80,14 @@ function getActionText(action: string): string {
 
 /**
  * 下载文本文件
+ * 注意：此函数只能在有DOM环境的地方使用（如sidepanel），不能在Service Worker中使用
  */
 export function downloadTextFile(content: string, filename: string): void {
+  // 检查是否有DOM环境
+  if (typeof document === 'undefined') {
+    throw new Error('downloadTextFile只能在有DOM环境的地方使用');
+  }
+  
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

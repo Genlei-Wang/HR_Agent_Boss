@@ -8,7 +8,7 @@
 import { SYSTEM_PROMPT, buildUserPrompt, TEST_PROMPT } from '../../shared/prompts';
 import type { MatchResult } from '../../shared/types';
 import type { AIService, AIModelConfig } from '../../shared/ai-service.interface';
-import { extractJson } from '../../shared/utils';
+import { extractJson } from '../../shared/utils-sw';
 import { saveAIInput, saveAIOutput } from '../debug-logger';
 
 /**

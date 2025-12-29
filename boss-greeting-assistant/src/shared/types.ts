@@ -8,9 +8,9 @@
 export interface PluginConfig {
   // AI模型配置
   aiModel: {
-    type: 'gemini' | 'qwen' | 'kimi' | 'deepseek' | 'wenxin' | 'zhipu';
+    type: 'gemini' | 'qwen';
     apiKey: string;
-    model?: string; // 可选：指定具体模型（如 qwen-vl-plus）
+    model?: string; // 可选：指定具体模型（如 qwen3-vl-plus）
   };
   
   // 兼容旧版本：保留apiKey字段

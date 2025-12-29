@@ -55,8 +55,14 @@ export function ParameterSection({ disabled }: Props) {
             disabled={disabled}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
-          <p className="text-xs text-yellow-600 mt-1">
-            ⚠️ 建议不超过100人/天，降低封号风险
+          <p className="text-xs text-gray-500 mt-1">
+            {!config.candidateCount || config.candidateCount < 1 ? (
+              <span className="text-red-600">⚠️ 请设置候选人数量</span>
+            ) : config.candidateCount > 100 ? (
+              <span className="text-yellow-600">⚠️ 建议不超过100人/天，降低封号风险</span>
+            ) : (
+              '建议不超过100人/天，降低封号风险'
+            )}
           </p>
         </div>
         
@@ -152,7 +158,7 @@ export function ParameterSection({ disabled }: Props) {
             <span className="text-gray-500">-</span>
             <input
               type="number"
-              min="1"
+              min={config.delayRange?.min ? config.delayRange.min + 1 : 1}
               max="10"
               value={config.delayRange?.max ?? ''}
               onChange={e => {
@@ -205,6 +211,16 @@ export function ParameterSection({ disabled }: Props) {
             />
             <span className="text-gray-500">秒</span>
           </div>
+          {config.delayRange?.min && config.delayRange?.max && config.delayRange.min >= config.delayRange.max && (
+            <p className="text-xs text-red-600 mt-1">
+              ⚠️ 最小值应小于最大值
+            </p>
+          )}
+          {(!config.delayRange?.min || !config.delayRange?.max) && (
+            <p className="text-xs text-red-600 mt-1">
+              ⚠️ 请设置操作间隔的最小值和最大值
+            </p>
+          )}
         </div>
       </div>
     </div>

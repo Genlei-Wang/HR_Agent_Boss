@@ -1,29 +1,58 @@
 /**
  * 控制按钮区域
  */
+import { useMemo } from 'react';
 import { useAppStore } from '../store/app-store';
 import { useToastContext } from '../contexts/ToastContext';
 import { MessageType } from '../../shared/message-types';
-import { validateJobDescription } from '../../shared/utils';
-import { ERROR_MESSAGES } from '../../shared/constants';
+import { validateJobDescription, validateApiKey } from '../../shared/utils-sw';
 
 export function ControlSection() {
   const { status, config, setStatus, createSession } = useAppStore();
   const { success, error, warning } = useToastContext();
 
-  const handleStart = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ControlSection.tsx:14',message:'启动前配置检查',data:{hasApiKey:!!config.apiKey,hasJobDescription:!!config.jobDescription,candidateCount:config.candidateCount,delayRange:config.delayRange},timestamp:Date.now(),sessionId:'debug-session',runId:'start-debug',hypothesisId:'START_VALIDATION'})}).catch(()=>{});
-    // #endregion
-    // 验证配置
-    if (!config.apiKey) {
-      error(ERROR_MESSAGES.NO_API_KEY || '请先配置API Key');
-      return;
+  // 验证配置是否完整
+  const validationResult = useMemo(() => {
+    const issues: string[] = [];
+    
+    // 1. 检查AI模型配置
+    if (!config.aiModel?.apiKey || !validateApiKey(config.aiModel.apiKey)) {
+      issues.push('请先配置AI模型的API Key');
     }
-
+    
+    // 2. 检查职位描述
     const jdValidation = validateJobDescription(config.jobDescription);
     if (!jdValidation.valid) {
-      error(jdValidation.message || '职位描述无效');
+      issues.push(jdValidation.message || '职位描述无效');
+    }
+    
+    // 3. 检查候选人数量
+    if (!config.candidateCount || config.candidateCount < 1 || config.candidateCount > 100) {
+      issues.push('请设置候选人数量（1-100）');
+    }
+    
+    // 4. 检查操作间隔
+    if (!config.delayRange?.min || !config.delayRange?.max) {
+      issues.push('请设置操作间隔（最小值和最大值）');
+    } else if (config.delayRange.min >= config.delayRange.max) {
+      issues.push('操作间隔最小值应小于最大值');
+    }
+    
+    return {
+      isValid: issues.length === 0,
+      issues,
+    };
+  }, [config]);
+
+  const handleStart = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ControlSection.tsx:14',message:'启动前配置检查',data:{hasApiKey:!!config.aiModel?.apiKey,hasJobDescription:!!config.jobDescription,candidateCount:config.candidateCount,delayRange:config.delayRange,validationResult},timestamp:Date.now(),sessionId:'debug-session',runId:'start-debug',hypothesisId:'START_VALIDATION'})}).catch(()=>{});
+    // #endregion
+    
+    // 验证配置
+    if (!validationResult.isValid) {
+      const errorMsg = validationResult.issues.join('\n');
+      error(errorMsg);
       return;
     }
 
@@ -119,7 +148,8 @@ export function ControlSection() {
           text: '开始打招呼',
           onClick: handleStart,
           className: 'bg-blue-500 hover:bg-blue-600',
-          disabled: false,
+          disabled: !validationResult.isValid,
+          tooltip: validationResult.isValid ? '' : validationResult.issues.join('；'),
         };
       case 'running':
         return {
@@ -127,13 +157,15 @@ export function ControlSection() {
           onClick: handleStop,
           className: 'bg-red-500 hover:bg-red-600',
           disabled: false,
+          tooltip: '',
         };
       default:
         return {
           text: '开始打招呼',
           onClick: handleStart,
           className: 'bg-blue-500 hover:bg-blue-600',
-          disabled: false,
+          disabled: !validationResult.isValid,
+          tooltip: validationResult.isValid ? '' : validationResult.issues.join('；'),
         };
     }
   };
@@ -142,10 +174,26 @@ export function ControlSection() {
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
+      {!validationResult.isValid && status !== 'running' && (
+        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="flex items-start">
+            <span className="text-yellow-600 mr-2">⚠️</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800 mb-1">配置不完整</p>
+              <ul className="text-xs text-yellow-700 space-y-1">
+                {validationResult.issues.map((issue, index) => (
+                  <li key={index}>• {issue}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
       <button
         onClick={buttonConfig.onClick}
         disabled={buttonConfig.disabled}
-        className={`w-full py-3 text-white font-semibold rounded-md transition ${buttonConfig.className} disabled:opacity-50`}
+        title={buttonConfig.tooltip}
+        className={`w-full py-3 text-white font-semibold rounded-md transition ${buttonConfig.className} disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {buttonConfig.text}
       </button>

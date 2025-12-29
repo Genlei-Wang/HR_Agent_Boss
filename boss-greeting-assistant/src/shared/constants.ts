@@ -68,7 +68,7 @@ export const BOSS_URL_PATTERNS = {
  * 错误消息
  */
 export const ERROR_MESSAGES = {
-  NO_API_KEY: '请先配置Gemini API Key',
+  NO_API_KEY: '请先配置AI模型的API Key',
   INVALID_API_KEY: 'API Key无效，请检查后重试',
   NO_JD: '请输入职位描述JD',
   JD_TOO_SHORT: 'JD描述过短，可能影响匹配准确度',

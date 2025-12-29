@@ -6,7 +6,7 @@
 import type { AIService, AIModelConfig } from '../../shared/ai-service.interface';
 import type { MatchResult } from '../../shared/types';
 import { SYSTEM_PROMPT, buildUserPrompt } from '../../shared/prompts';
-import { extractJson } from '../../shared/utils';
+import { extractJson } from '../../shared/utils-sw';
 
 /**
  * AI服务基类

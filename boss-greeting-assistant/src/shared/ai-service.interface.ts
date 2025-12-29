@@ -1,9 +1,12 @@
 /**
  * AI服务接口定义
- * 用于支持多种AI模型（Gemini、通义千问、Kimi等）
+ * 用于支持多种AI模型（Gemini、通义千问）
  */
 
 import type { MatchResult } from './types';
+// 直接导入服务，避免动态导入导致的DOM API问题
+import { GeminiService } from '../background/services/gemini-service';
+import { QwenService } from '../background/services/qwen-service';
 
 /**
  * AI服务接口
@@ -33,7 +36,7 @@ export interface AIService {
 /**
  * AI模型类型
  */
-export type AIModelType = 'gemini' | 'qwen' | 'kimi' | 'deepseek' | 'wenxin' | 'zhipu';
+export type AIModelType = 'gemini' | 'qwen';
 
 /**
  * AI模型配置
@@ -57,32 +60,31 @@ export interface AIModelConfig {
 export class AIServiceFactory {
   /**
    * 创建AI服务实例
+   * 使用直接导入避免动态导入导致的DOM API问题
    */
-  static async createService(config: AIModelConfig): Promise<AIService> {
+  static createService(config: AIModelConfig): AIService {
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ai-service.interface.ts:61',message:'createService开始',data:{modelType:config.type,hasDocument:typeof document !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'E'})}).catch(()=>{});
+    } catch (e) {}
+    // #endregion
+    
     switch (config.type) {
       case 'gemini':
-        const { GeminiService } = await import('../background/services/gemini-service');
+        // #region agent log
+        try {
+          fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ai-service.interface.ts:64',message:'创建Gemini服务',data:{hasDocument:typeof document !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'F'})}).catch(()=>{});
+        } catch (e) {}
+        // #endregion
         return new GeminiService(config);
       
       case 'qwen':
-        const { QwenService } = await import('../background/services/qwen-service');
+        // #region agent log
+        try {
+          fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ai-service.interface.ts:68',message:'创建Qwen服务',data:{hasDocument:typeof document !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'api-test',hypothesisId:'G'})}).catch(()=>{});
+        } catch (e) {}
+        // #endregion
         return new QwenService(config);
-      
-      case 'kimi':
-        const { KimiService } = await import('../background/services/kimi-service');
-        return new KimiService(config);
-      
-      case 'deepseek':
-        const { DeepSeekService } = await import('../background/services/deepseek-service');
-        return new DeepSeekService(config);
-      
-      case 'wenxin':
-        const { WenxinService } = await import('../background/services/wenxin-service');
-        return new WenxinService(config);
-      
-      case 'zhipu':
-        const { ZhipuService } = await import('../background/services/zhipu-service');
-        return new ZhipuService(config);
       
       default:
         throw new Error(`不支持的AI模型类型: ${config.type}`);
@@ -94,12 +96,8 @@ export class AIServiceFactory {
    */
   static getSupportedModels(): Array<{ type: AIModelType; name: string; displayName: string }> {
     return [
-      { type: 'gemini', name: 'gemini', displayName: 'Google Gemini' },
       { type: 'qwen', name: 'qwen', displayName: '通义千问 (Qwen)' },
-      { type: 'kimi', name: 'kimi', displayName: 'Kimi Chat' },
-      { type: 'deepseek', name: 'deepseek', displayName: 'DeepSeek' },
-      { type: 'wenxin', name: 'wenxin', displayName: '文心一言' },
-      { type: 'zhipu', name: 'zhipu', displayName: '智谱GLM' },
+      { type: 'gemini', name: 'gemini', displayName: 'Google Gemini' },
     ];
   }
 }

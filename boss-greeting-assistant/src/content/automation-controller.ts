@@ -165,11 +165,21 @@ export class AutomationController {
    * 处理单个候选人
    */
   private async processCandidate(index: number, config: PluginConfig): Promise<void> {
+    // 检查是否已停止
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
+    
     // 1. 获取候选人信息
     const infoResponse = await chrome.runtime.sendMessage({
       type: MessageType.GET_CANDIDATE_INFO,
       payload: { index },
     });
+    
+    // 检查是否已停止
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
     
     const candidateName = infoResponse.result?.info?.name || `候选人${index + 1}`;
     const candidateBaseInfo = infoResponse.result?.info?.baseInfo || '';
@@ -177,6 +187,11 @@ export class AutomationController {
     
     // 2. 随机延迟后点击候选人卡片
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000)); // 1-3秒
+    
+    // 检查是否已停止
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
     
     const clickResponse = await chrome.runtime.sendMessage({
       type: MessageType.CLICK_CARD,
@@ -187,8 +202,18 @@ export class AutomationController {
       throw new Error('点击候选人卡片失败');
     }
     
+    // 检查是否已停止
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
+    
     // 3. 等待详情页加载
     await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); // 1.5-2.5秒
+    
+    // 检查是否已停止
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
     
     // 4. 获取Canvas位置（带重试机制）
     let rectResponse: any = null;
@@ -196,6 +221,11 @@ export class AutomationController {
     const retryDelay = 1000; // 1秒
     
     for (let retry = 0; retry < maxRetries; retry++) {
+      // 检查是否已停止
+      if (!this.isRunning) {
+        throw new Error('用户已停止自动化');
+      }
+      
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'automation-controller.ts:163',message:'尝试获取Canvas位置',data:{candidateIndex:index,candidateName,retry,maxRetries},timestamp:Date.now(),sessionId:'debug-session',runId:'canvas-retry',hypothesisId:'CANVAS_LOADING'})}).catch(()=>{});
       // #endregion
@@ -204,6 +234,11 @@ export class AutomationController {
         type: MessageType.GET_CANVAS_RECT,
         payload: {},
       });
+      
+      // 检查是否已停止
+      if (!this.isRunning) {
+        throw new Error('用户已停止自动化');
+      }
       
       if (rectResponse.success && rectResponse.result?.rect) {
         // #region agent log
@@ -224,6 +259,11 @@ export class AutomationController {
     let confidence = 0;
     let reason = '';
     
+    // 检查是否已停止（在AI分析前）
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
+    
     if (rectResponse && rectResponse.success && rectResponse.result?.rect) {
       // 5. 截图并AI分析
       try {
@@ -239,6 +279,11 @@ export class AutomationController {
             },
           },
         });
+        
+        // 检查是否已停止（AI分析后）
+        if (!this.isRunning) {
+          throw new Error('用户已停止自动化');
+        }
         
         if (analyzeResponse.success && analyzeResponse.result) {
           matchResult = analyzeResponse.result.match;
@@ -270,6 +315,11 @@ export class AutomationController {
   }
     
     // 6. 根据匹配结果打招呼
+    // 检查是否已停止（在打招呼前）
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
+    
     if (matchResult) {
       console.log(`[AutomationController] ${candidateName} 匹配成功，准备打招呼`);
       
@@ -278,6 +328,11 @@ export class AutomationController {
       // #endregion
       
       await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      
+      // 检查是否已停止（延迟后）
+      if (!this.isRunning) {
+        throw new Error('用户已停止自动化');
+      }
       
       const greetResponse = await chrome.runtime.sendMessage({
         type: MessageType.CLICK_GREET,
@@ -303,7 +358,17 @@ export class AutomationController {
     }
     
     // 7. 关闭详情页
+    // 检查是否已停止（在关闭详情页前）
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
+    
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    
+    // 检查是否已停止（延迟后）
+    if (!this.isRunning) {
+      throw new Error('用户已停止自动化');
+    }
     
     await chrome.runtime.sendMessage({
       type: MessageType.CLOSE_DETAIL,

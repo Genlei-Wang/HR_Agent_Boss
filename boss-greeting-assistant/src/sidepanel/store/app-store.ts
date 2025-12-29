@@ -33,8 +33,9 @@ interface AppStore {
 
 const defaultConfig: PluginConfig = {
   aiModel: {
-    type: 'gemini',
+    type: 'qwen',
     apiKey: '',
+    model: 'qwen3-vl-plus',
   },
   candidateCount: DEFAULT_CONFIG.CANDIDATE_COUNT,
   jobDescription: '候选人-工作经历，要和B端、SaaS、工具产品、AI产品相关；不要和纯to C产品、垂直医疗、垂直教育、大客户定制产品相关。',
@@ -159,17 +160,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setCurrentSession: (sessionId: string | null) => {
     const state = get();
     if (sessionId === null) {
-      set({ currentSessionId: null, logs: [] });
+      set({ currentSessionId: null, logs: [], status: 'idle' });
       return;
     }
     
     const session = state.getSessionById(sessionId);
     if (session) {
+      // 如果session状态是running，不应该恢复（因为扩展可能已重启）
+      const status = session.status === 'running' ? 'idle' : session.status;
       set({
         currentSessionId: sessionId,
         logs: session.logs,
         stats: session.stats,
-        status: session.status,
+        status,
       });
     }
   },
@@ -184,18 +187,47 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const sessionLogs = (result[STORAGE_KEYS.SESSION_LOGS] || []) as SessionLog[];
       const currentSessionId = result[STORAGE_KEYS.CURRENT_SESSION_ID] as string | null;
       
-      set({ sessionLogs, currentSessionId });
+      // 清理所有running状态的session（因为扩展重启后不应该恢复running状态）
+      const cleanedSessionLogs = sessionLogs.map(s => {
+        if (s.status === 'running') {
+          return {
+            ...s,
+            status: 'error' as AppStatus,
+            endTime: s.endTime || new Date().toISOString(),
+          };
+        }
+        return s;
+      });
       
-      // 如果有当前session，加载其日志
+      // 如果currentSessionId对应的session是running状态，清除它
+      let cleanedCurrentSessionId = currentSessionId;
       if (currentSessionId) {
-        const session = sessionLogs.find(s => s.sessionId === currentSessionId);
-        if (session) {
+        const session = cleanedSessionLogs.find(s => s.sessionId === currentSessionId);
+        if (session && session.status === 'running') {
+          cleanedCurrentSessionId = null;
+        }
+      }
+      
+      set({ sessionLogs: cleanedSessionLogs, currentSessionId: cleanedCurrentSessionId });
+      
+      // 如果有当前session且不是running状态，加载其日志
+      if (cleanedCurrentSessionId) {
+        const session = cleanedSessionLogs.find(s => s.sessionId === cleanedCurrentSessionId);
+        if (session && session.status !== 'running') {
           set({
             logs: session.logs,
             stats: session.stats,
             status: session.status,
           });
         }
+      }
+      
+      // 保存清理后的session logs
+      if (cleanedSessionLogs !== sessionLogs || cleanedCurrentSessionId !== currentSessionId) {
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.SESSION_LOGS]: cleanedSessionLogs,
+          [STORAGE_KEYS.CURRENT_SESSION_ID]: cleanedCurrentSessionId,
+        });
       }
     } catch (error) {
       console.error('[AppStore] Failed to load session logs:', error);
