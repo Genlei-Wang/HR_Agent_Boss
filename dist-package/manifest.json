@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "HR Agent：Boss招聘打招呼、要简历",
+  "version": "1.0.0",
+  "description": "AI驱动的Boss直聘候选人智能筛选与自动打招呼工具",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "tabs",
+    "tabCapture",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://*.zhipin.com/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "HR Agent：Boss招聘打招呼、要简历"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "assets/index.ts-loader-HzQF07_q.js"
+      ],
+      "matches": [
+        "https://*.zhipin.com/*"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "https://*.zhipin.com/*"
+      ],
+      "resources": [
+        "assets/*",
+        "assets/utils-7X23tBXC.js",
+        "assets/index.ts-DCLhuQ0n.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ]
+}

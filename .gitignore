@@ -1,0 +1,33 @@
+# 项目根目录 .gitignore
+
+# 调试日志
+.cursor/debug.log
+
+# 构建产物（GitHub Actions会自动构建，不需要提交）
+boss-greeting-assistant/dist/
+boss-greeting-assistant/dist-package/
+boss-greeting-assistant-v*.zip
+*.crx
+
+# 视频文件（如果不想提交）
+# videos/
+
+# 临时文件
+*.tmp
+*.bak
+*~
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 敏感信息
+*.env
+*.key
+*.pem
+secrets.json

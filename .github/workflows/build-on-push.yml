@@ -1,0 +1,56 @@
+name: Build on Push
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'boss-greeting-assistant/**'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'boss-greeting-assistant/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: boss-greeting-assistant/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./boss-greeting-assistant
+        run: npm ci
+      
+      - name: Build
+        working-directory: ./boss-greeting-assistant
+        run: npm run build:prod
+      
+      - name: Check for debug code
+        working-directory: ./boss-greeting-assistant
+        run: |
+          if grep -r "127.0.0.1:7242" dist/ 2>/dev/null; then
+            echo "❌ 发现调试代码，构建失败"
+            exit 1
+          else
+            echo "✅ 未发现调试代码"
+          fi
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: boss-greeting-assistant/dist
+          retention-days: 7
+
