@@ -7,12 +7,14 @@ on:
       - master
     paths:
       - 'boss-greeting-assistant/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - main
       - master
     paths:
       - 'boss-greeting-assistant/**'
+      - '.github/workflows/**'
 
 jobs:
   build:
