@@ -54,16 +54,18 @@ function removeDebugLogs(filePath) {
     // 注意：这个匹配是安全的，因为它是完整的注释块
     content = content.replace(/\/\/\s*#region\s+agent\s+log[\s\S]*?\/\/\s*#endregion/g, '');
     
-    // ⚠️ 已禁用：移除 fetch 调用和 console.log，因为会在压缩后的代码上产生语法错误
-    // 问题：压缩后的代码是单行的，正则表达式匹配很容易出错
+    // ⚠️ 已禁用：移除调试服务器 fetch 调用
+    // 原因：在压缩后的代码上移除 fetch 调用会产生语法错误
     // 例如：await Promise(...), fetch(...).catch(...) 移除 fetch 后会留下孤立的逗号
+    // 
+    // 解决方案：
+    // 1. 使用环境变量在源代码层面控制调试代码（推荐）
+    // 2. 使用 Vite 的 define 选项在生产构建时替换调试代码
+    // 3. 暂时允许调试代码存在（不影响功能，只是会尝试连接不存在的调试服务器）
     
     // ⚠️ 已禁用：所有语法修复规则，因为会在压缩后的代码上产生新的错误
     // 修复规则之间互相冲突，导致修复后产生新的语法错误
     // 例如：修复 }T={ 后可能产生新的 }variable={ 错误
-    
-    // 不再进行任何代码修改，只返回 false 表示未修改
-    // 只移除调试日志区域标记（这是安全的，因为它是完整的注释块）
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content, 'utf8');
       return true;
