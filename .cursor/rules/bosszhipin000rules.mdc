@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+- **Anti-Detection**: 模拟真实用户行为。点击前增加随机延时（300-800ms），尽量不要直接操作 DOM，优先使用模拟鼠标点击。
+- **Robustness**: 网页是动态加载的，所有选择器必须配合 `waitForSelector` 使用。如果选择器失效，尝试通过文本内容（XPath）定位。

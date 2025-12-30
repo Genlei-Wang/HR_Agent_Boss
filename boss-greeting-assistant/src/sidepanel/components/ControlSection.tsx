@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useAppStore } from '../store/app-store';
 import { useToastContext } from '../contexts/ToastContext';
 import { MessageType } from '../../shared/message-types';
-import { validateJobDescription, validateApiKey } from '../../shared/utils-sw';
+import { validateResumeEvaluationPrompt, validateApiKey } from '../../shared/utils-sw';
 
 export function ControlSection() {
   const { status, config, setStatus, createSession } = useAppStore();
@@ -20,10 +20,10 @@ export function ControlSection() {
       issues.push('请先配置AI模型的API Key');
     }
     
-    // 2. 检查职位描述
-    const jdValidation = validateJobDescription(config.jobDescription);
-    if (!jdValidation.valid) {
-      issues.push(jdValidation.message || '职位描述无效');
+    // 2. 检查简历评估提示词
+    const promptValidation = validateResumeEvaluationPrompt(config.resumeEvaluationPrompt);
+    if (!promptValidation.valid) {
+      issues.push(promptValidation.message || '简历评估提示词无效');
     }
     
     // 3. 检查候选人数量
@@ -46,7 +46,7 @@ export function ControlSection() {
 
   const handleStart = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ControlSection.tsx:14',message:'启动前配置检查',data:{hasApiKey:!!config.aiModel?.apiKey,hasJobDescription:!!config.jobDescription,candidateCount:config.candidateCount,delayRange:config.delayRange,validationResult},timestamp:Date.now(),sessionId:'debug-session',runId:'start-debug',hypothesisId:'START_VALIDATION'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/4e1fd0d8-f02d-40e1-8fde-af751f6bdd3f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ControlSection.tsx:14',message:'启动前配置检查',data:{hasApiKey:!!config.aiModel?.apiKey,hasResumeEvaluationPrompt:!!config.resumeEvaluationPrompt,candidateCount:config.candidateCount,delayRange:config.delayRange,validationResult},timestamp:Date.now(),sessionId:'debug-session',runId:'start-debug',hypothesisId:'START_VALIDATION'})}).catch(()=>{});
     // #endregion
     
     // 验证配置

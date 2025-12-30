@@ -7,7 +7,7 @@ import type { MatchResult } from '../../shared/types';
 export class DeepSeekService extends BaseAIService {
   async analyzeCandidate(
     _imageBase64: string,
-    _jobDescription: string,
+    _resumeEvaluationPrompt: string,
     _candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
     throw new Error('DeepSeek服务暂未实现');

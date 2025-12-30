@@ -43,17 +43,25 @@ export function validateApiKey(apiKey: string): boolean {
 }
 
 /**
- * 验证JD内容
+ * 验证简历评估提示词
  */
-export function validateJobDescription(jd: string): { valid: boolean; message?: string } {
-  if (!jd || jd.trim().length === 0) {
-    return { valid: false, message: '请输入职位描述JD' };
+export function validateResumeEvaluationPrompt(prompt: string): { valid: boolean; message?: string } {
+  if (!prompt || prompt.trim().length === 0) {
+    return { valid: false, message: '请输入简历评估提示词' };
   }
   
-  if (jd.trim().length < 20) {
-    return { valid: false, message: 'JD描述过短，可能影响匹配准确度' };
+  if (prompt.trim().length < 20) {
+    return { valid: false, message: '提示词过短，可能影响匹配准确度' };
   }
   
   return { valid: true };
+}
+
+/**
+ * 验证JD内容（兼容旧版本）
+ * @deprecated 使用 validateResumeEvaluationPrompt() 替代
+ */
+export function validateJobDescription(jd: string): { valid: boolean; message?: string } {
+  return validateResumeEvaluationPrompt(jd);
 }
 

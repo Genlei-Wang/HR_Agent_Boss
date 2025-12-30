@@ -137,7 +137,7 @@ async function handleAnalyzeCandidate(payload: any): Promise<Response> {
       // #endregion
       result = await service.analyzeCandidate(
         imageBase64,
-        payload.jobDescription,
+        payload.resumeEvaluationPrompt,
         payload.candidateInfo
       );
     } catch (error: any) {
@@ -306,6 +306,119 @@ async function getCandidatesFromPage(): Promise<Response> {
     return {
       success: false,
       error: error.message || '获取失败',
+    };
+  }
+}
+
+/**
+ * 滚动加载更多候选人
+ * 模拟用户滚动到底部，触发懒加载
+ */
+async function scrollToLoadCandidates(targetCount: number): Promise<Response> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) {
+      return { success: false, error: '无法获取当前标签页' };
+    }
+    
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id, allFrames: true },
+      args: [targetCount],
+      func: async (targetCount: number) => {
+        // 获取当前候选人数量
+        const getCurrentCount = (): number => {
+          const cards1 = document.querySelectorAll('ul.card-list li.card-item');
+          if (cards1.length > 0) return cards1.length;
+          
+          const cards2 = document.querySelectorAll('li.card-item');
+          if (cards2.length > 0) return cards2.length;
+          
+          const recommendList = document.querySelector('#recommend-list');
+          if (recommendList) {
+            const lis = recommendList.querySelectorAll('li');
+            if (lis.length > 0) return lis.length;
+          }
+          
+          return 0;
+        };
+        
+        let currentCount = getCurrentCount();
+        let lastCount = currentCount;
+        let scrollAttempts = 0;
+        const maxScrollAttempts = 20; // 最大滚动尝试次数，避免无限循环
+        const scrollDelay = 800; // 每次滚动后等待时间（ms）
+        const loadWaitTime = 1500; // 等待新内容加载的时间（ms）
+        
+        // 如果已经有足够的候选人，直接返回
+        if (currentCount >= targetCount) {
+          return { success: true, finalCount: currentCount, scrollAttempts: 0, reachedTarget: true };
+        }
+        
+        // 滚动加载循环
+        while (currentCount < targetCount && scrollAttempts < maxScrollAttempts) {
+          // 记录滚动前的数量
+          lastCount = currentCount;
+          
+          // 平滑滚动到底部
+          window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+          });
+          
+          // 等待滚动完成
+          await new Promise(resolve => setTimeout(resolve, scrollDelay));
+          
+          // 等待新内容加载
+          await new Promise(resolve => setTimeout(resolve, loadWaitTime));
+          
+          // 检查是否有新内容加载
+          currentCount = getCurrentCount();
+          
+          // 如果数量没有增加，说明已经加载完所有内容
+          if (currentCount === lastCount) {
+            // 再尝试一次快速滚动，确保真的到底了
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'auto'
+            });
+            await new Promise(resolve => setTimeout(resolve, loadWaitTime));
+            currentCount = getCurrentCount();
+            
+            // 如果还是没有增加，说明真的没有更多内容了
+            if (currentCount === lastCount) {
+              break;
+            }
+          }
+          
+          scrollAttempts++;
+        }
+        
+        return {
+          success: true,
+          finalCount: currentCount,
+          scrollAttempts,
+          reachedTarget: currentCount >= targetCount,
+        };
+      },
+    });
+    
+    // 从所有frame的结果中找到候选人数量最多的
+    let bestResult = { success: false, finalCount: 0, scrollAttempts: 0, reachedTarget: false };
+    for (const result of results) {
+      if (result.result && result.result.finalCount > bestResult.finalCount) {
+        bestResult = result.result;
+      }
+    }
+    
+    return {
+      success: true,
+      result: bestResult,
+    };
+  } catch (error: any) {
+    console.error('[Background] scrollToLoadCandidates failed:', error);
+    return {
+      success: false,
+      error: error.message || '滚动加载失败',
     };
   }
 }
@@ -1083,6 +1196,19 @@ chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) =
           sendResponse({
             success: false,
             error: error.message || '获取失败',
+          });
+        });
+      break;
+      
+    case MessageType.SCROLL_TO_LOAD_CANDIDATES:
+      // 滚动加载更多候选人
+      scrollToLoadCandidates(message.payload?.targetCount || 50)
+        .then(sendResponse)
+        .catch(error => {
+          console.error('[Background] Handler error:', error);
+          sendResponse({
+            success: false,
+            error: error.message || '滚动加载失败',
           });
         });
       break;

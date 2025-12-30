@@ -16,13 +16,13 @@ export interface AIService {
   /**
    * 分析候选人是否匹配JD要求
    * @param imageBase64 候选人工作经历截图（Base64格式）
-   * @param jobDescription 职位描述
+   * @param resumeEvaluationPrompt 简历评估提示词（包含角色和JD要求）
    * @param candidateInfo 候选人信息（可选）
    * @returns 匹配结果
    */
   analyzeCandidate(
     imageBase64: string,
-    jobDescription: string,
+    resumeEvaluationPrompt: string,
     candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult>;
 

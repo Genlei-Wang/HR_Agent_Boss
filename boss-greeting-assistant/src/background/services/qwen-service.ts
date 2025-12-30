@@ -8,7 +8,7 @@
 import { BaseAIService } from './base-ai-service';
 import type { AIModelConfig } from '../../shared/ai-service.interface';
 import type { MatchResult } from '../../shared/types';
-import { SYSTEM_PROMPT, buildUserPrompt, TEST_PROMPT } from '../../shared/prompts';
+import { TEST_PROMPT } from '../../shared/prompts';
 import { saveAIInput, saveAIOutput } from '../debug-logger';
 
 /**
@@ -24,11 +24,10 @@ export class QwenService extends BaseAIService {
    */
   async analyzeCandidate(
     imageBase64: string,
-    jobDescription: string,
+    resumeEvaluationPrompt: string,
     candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
-    const userPrompt = buildUserPrompt(jobDescription);
-    const combinedPrompt = `${SYSTEM_PROMPT}\n\n${userPrompt}`;
+    const combinedPrompt = this.buildPrompt(resumeEvaluationPrompt);
     
     // 记录AI输入
     if (candidateInfo) {

@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import type { PluginConfig, OperationLog, AppStatus, AppStats, SessionLog } from '../../shared/types';
 import { DEFAULT_CONFIG, STORAGE_KEYS } from '../../shared/constants';
+import { DEFAULT_RESUME_EVALUATION_PROMPT } from '../../shared/prompts';
 
 interface AppStore {
   // 状态
@@ -38,7 +39,7 @@ const defaultConfig: PluginConfig = {
     model: 'qwen3-vl-plus',
   },
   candidateCount: DEFAULT_CONFIG.CANDIDATE_COUNT,
-  jobDescription: '候选人-工作经历，要和B端、SaaS、工具产品、AI产品相关；不要和纯to C产品、垂直医疗、垂直教育、大客户定制产品相关。',
+  resumeEvaluationPrompt: `${DEFAULT_RESUME_EVALUATION_PROMPT}\n\nJD要求：候选人-工作经历，要和B端、SaaS、工具产品、AI产品相关；不要和纯to C产品、垂直医疗、垂直教育、大客户定制产品相关。`,
   delayRange: {
     min: DEFAULT_CONFIG.DELAY_MIN,
     max: DEFAULT_CONFIG.DELAY_MAX,

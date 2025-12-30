@@ -22,6 +22,7 @@ export enum MessageType {
   CLOSE_DETAIL = 'CLOSE_DETAIL',
   GET_CANDIDATE_INFO = 'GET_CANDIDATE_INFO',
   GET_CANVAS_RECT = 'GET_CANVAS_RECT',
+  SCROLL_TO_LOAD_CANDIDATES = 'SCROLL_TO_LOAD_CANDIDATES',
   
   // Background -> Side Panel
   LOG_UPDATE = 'LOG_UPDATE',
@@ -66,7 +67,7 @@ export interface AnalyzeCandidatePayload {
     width: number;
     height: number;
   };
-  jobDescription: string;
+  resumeEvaluationPrompt: string; // 简历评估提示词（包含角色和JD要求）
   candidateInfo?: { index: number; name: string; sessionDir?: string };
   config?: import('./types').PluginConfig; // AI模型配置
 }

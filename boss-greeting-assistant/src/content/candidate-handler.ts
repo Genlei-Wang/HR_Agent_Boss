@@ -102,7 +102,7 @@ export class CandidateHandler {
             width: rect.width,
             height: rect.height,
           },
-          jobDescription: config.jobDescription,
+          resumeEvaluationPrompt: config.resumeEvaluationPrompt,
         },
       });
       

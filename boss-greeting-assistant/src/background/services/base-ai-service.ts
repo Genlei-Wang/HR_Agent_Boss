@@ -5,7 +5,7 @@
 
 import type { AIService, AIModelConfig } from '../../shared/ai-service.interface';
 import type { MatchResult } from '../../shared/types';
-import { SYSTEM_PROMPT, buildUserPrompt } from '../../shared/prompts';
+import { buildEvaluationPrompt } from '../../shared/prompts';
 import { extractJson } from '../../shared/utils-sw';
 
 /**
@@ -24,7 +24,7 @@ export abstract class BaseAIService implements AIService {
    */
   abstract analyzeCandidate(
     imageBase64: string,
-    jobDescription: string,
+    resumeEvaluationPrompt: string,
     candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult>;
   
@@ -35,10 +35,10 @@ export abstract class BaseAIService implements AIService {
   
   /**
    * 构建请求提示词（通用方法）
+   * @param resumeEvaluationPrompt 简历评估提示词（包含角色和JD要求）
    */
-  protected buildPrompt(jobDescription: string): string {
-    const userPrompt = buildUserPrompt(jobDescription);
-    return `${SYSTEM_PROMPT}\n\n${userPrompt}`;
+  protected buildPrompt(resumeEvaluationPrompt: string): string {
+    return buildEvaluationPrompt(resumeEvaluationPrompt);
   }
   
   /**

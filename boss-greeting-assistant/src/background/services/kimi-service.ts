@@ -22,10 +22,10 @@ export class KimiService extends BaseAIService {
    */
   async analyzeCandidate(
     imageBase64: string,
-    jobDescription: string,
+    resumeEvaluationPrompt: string,
     _candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
-    const prompt = this.buildPrompt(jobDescription);
+    const prompt = this.buildPrompt(resumeEvaluationPrompt);
     
     try {
       const response = await this.callKimiAPI(prompt, imageBase64);

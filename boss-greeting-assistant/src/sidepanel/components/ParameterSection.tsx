@@ -66,33 +66,35 @@ export function ParameterSection({ disabled }: Props) {
           </p>
         </div>
         
-        {/* JD描述 */}
+        {/* 简历评估提示词 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            职位描述JD
+            简历评估提示词
           </label>
           <textarea
-            value={config.jobDescription}
+            value={config.resumeEvaluationPrompt}
             onChange={e => {
-              updateConfig({ jobDescription: e.target.value });
+              updateConfig({ resumeEvaluationPrompt: e.target.value });
               // 保存配置
               chrome.storage.local.get([STORAGE_KEYS.CONFIG]).then(result => {
                 const savedConfig = result[STORAGE_KEYS.CONFIG] || {};
                 chrome.storage.local.set({
-                  [STORAGE_KEYS.CONFIG]: { ...savedConfig, jobDescription: e.target.value }
+                  [STORAGE_KEYS.CONFIG]: { ...savedConfig, resumeEvaluationPrompt: e.target.value }
                 });
               });
             }}
             disabled={disabled}
-            rows={6}
-            placeholder="请输入岗位要求、核心技能等&#10;例如：&#10;- 3年以上前端开发经验&#10;- 熟练掌握React/Vue&#10;- 有大型项目经验"
+            rows={8}
+            placeholder="请输入完整的评估提示词，包含角色和JD要求&#10;例如：&#10;你是资深的HR招聘专家，请根据JD要求，分析候选人的工作经历截图，判断匹配程度。评判：学历、工作经历、年限等。&#10;&#10;JD要求：&#10;- 3年以上前端开发经验&#10;- 熟练掌握React/Vue&#10;- 有大型项目经验"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 resize-none"
           />
           <p className="text-xs text-gray-500 mt-1">
-            字数: {config.jobDescription.length} 
-            {config.jobDescription.length < 20 && config.jobDescription.length > 0 && (
+            字数: {config.resumeEvaluationPrompt.length} 
+            {config.resumeEvaluationPrompt.length < 20 && config.resumeEvaluationPrompt.length > 0 && (
               <span className="text-yellow-600 ml-2">⚠️ 建议至少20字以提高准确度</span>
             )}
+            <br />
+            <span className="text-gray-400">提示：技术限制部分（如输出格式、匹配标准）已自动添加，无需在此输入</span>
           </p>
         </div>
         

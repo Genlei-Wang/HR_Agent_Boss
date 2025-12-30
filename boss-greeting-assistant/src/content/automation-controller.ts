@@ -96,6 +96,29 @@ export class AutomationController {
   private async runAutomation(config: PluginConfig): Promise<void> {
     console.log('[AutomationController] Starting automation...');
     
+    const candidateCountLimit = config.candidateCount ?? DEFAULT_CONFIG.CANDIDATE_COUNT;
+    
+    // 先滚动加载足够的候选人（如果目标数量大于初始加载的数量）
+    console.log(`[AutomationController] 📜 开始滚动加载候选人，目标数量: ${candidateCountLimit}`);
+    try {
+      const scrollResponse = await chrome.runtime.sendMessage({
+        type: MessageType.SCROLL_TO_LOAD_CANDIDATES,
+        payload: { targetCount: candidateCountLimit },
+      });
+      
+      if (scrollResponse.success && scrollResponse.result) {
+        const { finalCount, scrollAttempts, reachedTarget } = scrollResponse.result;
+        console.log(`[AutomationController] 📜 滚动加载完成: ${finalCount} 个候选人 (尝试 ${scrollAttempts} 次)`);
+        if (!reachedTarget) {
+          console.warn(`[AutomationController] ⚠️ 未能加载到目标数量，实际加载: ${finalCount} 个`);
+        }
+      } else {
+        console.warn('[AutomationController] ⚠️ 滚动加载失败，继续使用当前可见的候选人');
+      }
+    } catch (error) {
+      console.warn('[AutomationController] ⚠️ 滚动加载出错，继续使用当前可见的候选人:', error);
+    }
+    
     // 获取候选人列表
     const response = await chrome.runtime.sendMessage({
       type: MessageType.GET_CANDIDATES_FROM_PAGE,
@@ -106,7 +129,6 @@ export class AutomationController {
     }
     
     const candidateCount = response.result.count;
-    const candidateCountLimit = config.candidateCount ?? DEFAULT_CONFIG.CANDIDATE_COUNT;
     const targetCount = Math.min(candidateCountLimit, candidateCount);
     
     console.log(`[AutomationController] ✅ 找到 ${candidateCount} 个候选人，将处理 ${targetCount} 个`);
@@ -271,12 +293,13 @@ export class AutomationController {
           type: MessageType.ANALYZE_CANDIDATE,
           payload: {
             rect: rectResponse.result.rect,
-            jobDescription: config.jobDescription,
+            resumeEvaluationPrompt: config.resumeEvaluationPrompt,
             candidateInfo: {
               index,
               name: candidateName,
               sessionDir: this.sessionDir,
             },
+            config: config,
           },
         });
         

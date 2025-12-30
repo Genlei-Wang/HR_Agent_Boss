@@ -18,7 +18,7 @@ export interface PluginConfig {
   
   // 功能配置
   candidateCount?: number; // 允许为空，支持删除
-  jobDescription: string;
+  resumeEvaluationPrompt: string; // 简历评估提示词（包含角色和JD要求）
   delayRange?: {
     min?: number; // 允许为空
     max?: number; // 允许为空

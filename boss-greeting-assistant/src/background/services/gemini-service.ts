@@ -5,7 +5,7 @@
  * Proprietary and Confidential.
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
-import { SYSTEM_PROMPT, buildUserPrompt, TEST_PROMPT } from '../../shared/prompts';
+import { buildEvaluationPrompt, TEST_PROMPT } from '../../shared/prompts';
 import type { MatchResult } from '../../shared/types';
 import type { AIService, AIModelConfig } from '../../shared/ai-service.interface';
 import { extractJson } from '../../shared/utils-sw';
@@ -41,11 +41,10 @@ export class GeminiService implements AIService {
    */
   async analyzeCandidate(
     imageBase64: string,
-    jobDescription: string,
+    resumeEvaluationPrompt: string,
     candidateInfo?: { index: number; name: string; sessionDir?: string }
   ): Promise<MatchResult> {
-    const userPrompt = buildUserPrompt(jobDescription);
-    const combinedPrompt = `${SYSTEM_PROMPT}\n\n${userPrompt}`;
+    const combinedPrompt = buildEvaluationPrompt(resumeEvaluationPrompt);
     
     // 记录AI输入
     if (candidateInfo) {
