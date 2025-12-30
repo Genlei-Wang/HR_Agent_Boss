@@ -39,36 +39,31 @@ function removeDebugLogs(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     const originalContent = content;
     
-    // 移除调试服务器fetch调用（处理压缩后的代码）
-    // 匹配 fetch("http://127.0.0.1:7242...") 及其后续的 .catch(()=>{})
-    content = content.replace(/fetch\(["']http:\/\/127\.0\.0\.1:7242[^"']*["'][\s\S]*?\)\.catch\(\(\)=>\{\}\)/g, '');
+    // ⚠️ 重要：已禁用所有代码修改操作，因为会在压缩后的代码上产生语法错误
+    // 压缩后的代码是单行的，正则表达式匹配非常危险，容易误删或误改代码
+    // 
+    // 解决方案：
+    // 1. 使用环境变量在源代码层面控制调试日志（推荐）
+    // 2. 使用 Vite 的 define 选项在生产构建时替换调试代码
+    // 3. 使用条件编译（如 #ifdef DEBUG）来控制调试代码
+    //
+    // 当前只保留路径修复功能（fixServiceWorkerLoader 和 fixServiceWorkerImports）
     
-    // 更彻底的匹配：匹配整个fetch调用链
-    content = content.replace(/fetch\(["']http:\/\/127\.0\.0\.1:7242[^"']*["'][\s\S]*?catch\([^)]*\)/g, '');
-    
-    // 移除调试日志区域标记
+    // 第一步：移除调试日志区域标记（包括标记本身和中间的所有内容）
+    // 匹配 // #region agent log ... // #endregion（跨行匹配）
+    // 注意：这个匹配是安全的，因为它是完整的注释块
     content = content.replace(/\/\/\s*#region\s+agent\s+log[\s\S]*?\/\/\s*#endregion/g, '');
     
-    // 移除console.log/debug/info（但保留重要的console.error）
-    const lines = content.split('\n');
-    const cleanedLines = lines.map(line => {
-      // 保留重要的console.error
-      if (line.includes('console.error') && shouldKeepError(line)) {
-        return line;
-      }
-      // 移除console.log/debug/info
-      if (/console\.(log|debug|info)\s*\(/.test(line)) {
-        return '';
-      }
-      return line;
-    });
-    content = cleanedLines.join('\n');
+    // ⚠️ 已禁用：移除 fetch 调用和 console.log，因为会在压缩后的代码上产生语法错误
+    // 问题：压缩后的代码是单行的，正则表达式匹配很容易出错
+    // 例如：await Promise(...), fetch(...).catch(...) 移除 fetch 后会留下孤立的逗号
     
-    // 清理多余的空行和逗号
-    content = content.replace(/\n{4,}/g, '\n\n\n');
-    content = content.replace(/,\s*,/g, ','); // 移除连续逗号
-    content = content.replace(/,\s*\}/g, '}'); // 移除对象末尾的逗号
+    // ⚠️ 已禁用：所有语法修复规则，因为会在压缩后的代码上产生新的错误
+    // 修复规则之间互相冲突，导致修复后产生新的语法错误
+    // 例如：修复 }T={ 后可能产生新的 }variable={ 错误
     
+    // 不再进行任何代码修改，只返回 false 表示未修改
+    // 只移除调试日志区域标记（这是安全的，因为它是完整的注释块）
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content, 'utf8');
       return true;
