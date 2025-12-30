@@ -6,8 +6,11 @@
 # 构建产物（GitHub Actions会自动构建，不需要提交）
 boss-greeting-assistant/dist/
 boss-greeting-assistant/dist-package/
+boss-greeting-assistant/dist.tar.gz
 boss-greeting-assistant-v*.zip
+dist-package/
 *.crx
+*.tar.gz
 
 # 视频文件（如果不想提交）
 # videos/
