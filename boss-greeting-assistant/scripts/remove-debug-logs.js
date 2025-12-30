@@ -101,6 +101,30 @@ function processDirectory(dir) {
   return processedCount;
 }
 
+// 修复 Service Worker Loader 的导入路径
+function fixServiceWorkerLoader() {
+  const swLoaderPath = path.join(DIST_DIR, 'service-worker-loader.js');
+  if (!fs.existsSync(swLoaderPath)) {
+    console.log('⚠️  service-worker-loader.js 不存在，跳过修复');
+    return false;
+  }
+  
+  let content = fs.readFileSync(swLoaderPath, 'utf8');
+  const originalContent = content;
+  
+  // 将相对路径改为绝对路径（Chrome Extension Manifest V3 要求）
+  // './assets/...' -> '/assets/...'
+  content = content.replace(/import\s+['"]\.\/assets\/([^'"]+)['"]/g, "import '/assets/$1'");
+  
+  if (content !== originalContent) {
+    fs.writeFileSync(swLoaderPath, content, 'utf8');
+    console.log(`✓ 已修复: ${swLoaderPath}`);
+    return true;
+  }
+  
+  return false;
+}
+
 // 主函数
 function main() {
   console.log('========================================');
@@ -114,6 +138,10 @@ function main() {
   }
   
   console.log(`处理目录: ${DIST_DIR}`);
+  console.log('');
+  
+  // 先修复 Service Worker Loader
+  fixServiceWorkerLoader();
   console.log('');
   
   const processedCount = processDirectory(DIST_DIR);
