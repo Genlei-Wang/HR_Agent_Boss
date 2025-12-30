@@ -125,6 +125,31 @@ function fixServiceWorkerLoader() {
   return false;
 }
 
+// 修复 Service Worker 主文件中的相对路径导入
+function fixServiceWorkerImports() {
+  const swMainPath = path.join(DIST_DIR, 'assets', 'index.ts-CoG0h6cX.js');
+  if (!fs.existsSync(swMainPath)) {
+    console.log('⚠️  Service Worker 主文件不存在，跳过修复');
+    return false;
+  }
+  
+  let content = fs.readFileSync(swMainPath, 'utf8');
+  const originalContent = content;
+  
+  // 将相对路径改为绝对路径
+  // from"./message-types-18-naiTu.js" -> from"/assets/message-types-18-naiTu.js"
+  // from"./ai-service.interface-RTMlAnJW.js" -> from"/assets/ai-service.interface-RTMlAnJW.js"
+  content = content.replace(/from["']\.\/([^"']+)["']/g, 'from"/assets/$1"');
+  
+  if (content !== originalContent) {
+    fs.writeFileSync(swMainPath, content, 'utf8');
+    console.log(`✓ 已修复: ${swMainPath}`);
+    return true;
+  }
+  
+  return false;
+}
+
 // 主函数
 function main() {
   console.log('========================================');
@@ -140,8 +165,9 @@ function main() {
   console.log(`处理目录: ${DIST_DIR}`);
   console.log('');
   
-  // 先修复 Service Worker Loader
+  // 先修复 Service Worker Loader 和主文件
   fixServiceWorkerLoader();
+  fixServiceWorkerImports();
   console.log('');
   
   const processedCount = processDirectory(DIST_DIR);
