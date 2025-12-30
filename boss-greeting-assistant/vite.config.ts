@@ -9,6 +9,7 @@ export default defineConfig({
     react(),
     crx({ manifest: manifest as any }),
   ],
+  base: './', // 使用相对路径，确保在Chrome扩展中正常工作
   build: {
     modulePreload: false, // 禁用模块预加载，避免在Service Worker中使用DOM API
     rollupOptions: {
